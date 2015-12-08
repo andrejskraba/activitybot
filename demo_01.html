@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- <script src = "http://192.168.3.214:8080/socket.io/socket.io.js"></script>  -->
+<script src="/socket.io/socket.io.js"></script>
+<html>
+    <head>
+        <title>Branje slike</title>
+    </head>
+    
+<style>
+body { font-family: courier; font-size: 12px; }
+
+<br>
+
+
+#izpis00
+	{float: left;}
+#izpis11
+	{float: left;}
+
+#izpis0
+	{float: left;}
+#izpis1
+	{float: left;}
+#izpis2
+	{float: left;}
+#izpis3
+	{float: left;}	
+
+</style>    
+
+LEV_PWM <input id="val4" value=10 />
+<input id="val5" value=0 />
+<button id="levPWMplus">+</button>
+<button id="levPWMminus">-</button>    
+<button id="send2">Send_2</button>
+<br>
+DES_PWM <input id="val6" value=11 />
+<input id="val7" value=0 />
+<button id="desPWMplus">+</button>
+<button id="desPWMminus">-</button>    
+<button id="send3">Send_3</button>
+<br>    
+    
+<p></p>    
+<div class = "izpisRazred" id="izpis0">0</div><div class = "izpisRazred" id="izpis1">0</div>
+<p></p>
+<br></br>  
+<div class = "izpisRazred" id="izpis00">0</div><div class = "izpisRazred" id="izpis11">0</div>
+<p></p>
+<br></br>
+	
+	<button id="leftforward" style="height: 200px; width: 200px; font-size:35px;">Lfwd</button>
+	<button id="forward" style="height: 200px; width: 200px; font-size:35px;">FWD</button>
+	<button id="rightforward" style="height: 200px; width: 200px; font-size:35px;">Rfwd</button>
+	<br>
+	<button id="spinleft" style="height: 200px; width: 200px; font-size:35px;">SpinL</button>
+	<button id="stop" style="height: 200px; width: 200px; font-size:35px;">STOP</button>
+	<button id="spinright" style="height: 200px; width: 200px; font-size:35px;">SpinR</button>
+	<br>
+	<button id="leftbackward" style="height: 200px; width: 200px; font-size:35px;">Lbkw</button>
+	<button id="backward" style="height: 200px; width: 200px; font-size:35px;">BKW</button>	
+	<button id="rightbackward" style="height: 200px; width: 200px; font-size:35px;">Rbkw</button>
+	<br>
+	<button id="ledwhite" style="height: 200px; width: 200px; font-size:35px;">LED W</button>
+	<button id="ledyellow" style="height: 200px; width: 200px; font-size:35px;">LED Y</button>
+	<button id="ledblue" style="height: 200px; width: 200px; font-size:35px;">LED B</button>		
+	<br>
+	<button id="ledgreen" style="height: 200px; width: 200px; font-size:35px;">LED G</button>
+	<button id="ledred" style="height: 200px; width: 200px; font-size:35px;">LED R</button>
+	<button id="ledsoff" style="height: 200px; width: 200px; font-size:35px;">LEDsOFF</button>		
+	<br>
+	<button id="zgrabi" style="height: 200px; width: 200px; font-size:35px;">Zgrabi</button>
+	<button id="tiltup" style="height: 200px; width: 200px; font-size:35px;">Tup</button>
+	<button id="tiltdown" style="height: 200px; width: 200px; font-size:35px;">Tdwn</button>
+	
+	</p>
+    
+
+<div class = "izpisRazred" id="izpis2"></div>
+<div class = "izpisRazred" id="izpis3"></div>    
+
+<script type="text/javascript" charset="UTF-8">
+    
+    
+var bufferDvojePraznih = new Array(); // buffer za dvoje praznih likov - iz prvega in drugega robota, èe je pri obeh zadeva prazna, takrat ustavimo motorje; èe je le na enem prazna, na drugem pa je nekaj prikazano motorjev ne ustavimo
+bufferDvojePraznih[0] = 0;
+bufferDvojePraznih[1] = 0;
+bufferDvojePraznih[2] = 0;
+bufferDvojePraznih[3] = 0;
+
+
+var stevec = 0;
+var toggle = 0;
+var toggle2 = 0;
+var toggle3 = 0;
+var toggle4 = 0;
+var toggle5 = 0;
+var toggle6 = 0;
+var toggle7 = 0;
+var modra = 0;
+var rumena = 0;
+var bela = 0;
+
+
+var robotIP00 = "193.2.123.42:8080"; // robotIP00 je lokalni IP naslov robota številka 00 (kjer je shranjena ta html datoteka 
+//var robotIP00 = "192.168.1.106:8080"; // robotIP00 je lokalni IP naslov robota številka 00 (kjer je shranjena ta html datoteka 
+var robotIP01 = "192.168.1.111:8080"; // robotIP01 je IP naslov robota številka 
+var robotIP02 = "192.168.1.112:8080"; // robotIP02 je IP naslov robota številka 
+var robotIP03 = "192.168.1.113:8080"; // robotIP03 je IP naslov robota številka 
+
+var socket1 = io.connect(robotIP00); // ustvarimo spremenljivko socket in povemo, kam se povežemo (vtaknemo)
+                                               // io.connect je iz knjižnice socket.io.js, argument je, kam se prikljuèimo
+                                               // ta vrstica pove, naj se klient poveže s strežnikom na naslovu http://93.103.18.222:8080
+
+var socket2 = io.connect(robotIP01); // ustvarimo spremenljivko socket in povemo, kam se povežemo (vtaknemo)
+var socket3 = io.connect(robotIP02); // ustvarimo spremenljivko socket in povemo, kam se povežemo (vtaknemo)
+var socket4 = io.connect(robotIP03); // ustvarimo spremenljivko socket in povemo, kam se povežemo (vtaknemo)
+
+
+var output    = document.getElementById('izpis2')
+, buttonOn  = document.getElementById('buttonOn') // dodamo spremenljivko za gumb On ... t.j. poskrbimo, da je html loèen od javascript kode (èe imamo browser, ki ne podpira JavaScript-a - unobtrusive JS)
+, buttonOff = document.getElementById('buttonOff') // dodamo spremenljivko za gumb Off
+, buttonZgrabi = document.getElementById('zgrabi') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonLedWhite = document.getElementById('ledwhite') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonLedYellow = document.getElementById('ledyellow') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonLedBlue = document.getElementById('ledblue') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonLedGreen = document.getElementById('ledgreen') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonLedRed = document.getElementById('ledred') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonLedsOff = document.getElementById('ledsoff') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonForward = document.getElementById('forward') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonBackward = document.getElementById('backward') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonStop = document.getElementById('stop') // dodamo spremenljivko za gumb Off; // dodamo spremenljivko za gumb Off
+, buttonLeftforward = document.getElementById("leftforward")
+, buttonRightforward = document.getElementById("rightforward")
+, buttonSpinleft = document.getElementById("spinleft")
+, buttonSpinright = document.getElementById("spinright")
+, buttonLeftbackward = document.getElementById("leftbackward")	
+, buttonRightbackward = document.getElementById("rightbackward")
+, buttonTiltup = document.getElementById("tiltup")
+, buttonTiltdown = document.getElementById("tiltdown");
+
+// var canvas = document.getElementById('myCanvas');
+//    var context = canvas.getContext('2d');
+//    var imageObj = new Image();
+    
+//       var canvas2 = document.getElementById('myCanvas2');
+//      var context2 = canvas2.getContext('2d');
+//var imageObj2 = new Image();
+
+// var canvas3 = document.getElementById('myCanvas3');
+//      var context3 = canvas3.getContext('2d');
+// context3.strokeStyle='#00ff00';
+//     context3.lineWidth=3;
+
+//    var canvas4 = document.getElementById('myCanvas4');
+//    var context4 = canvas4.getContext('2d');    
+
+    //var socket = io.connect('http://192.168.3.205:8080'); // ustvarimo spremenljivko socket in povemo, kam se povežemo (vtaknemo)
+    
+function akcija(fig1Arg, callback) { // prvi del za callback funkcijo
+
+	return callback(fig1Arg);
+
+}
+
+function posredujSliko(fig1Arg) { // drugi del za callback funkcijo
+
+
+ var xxx = fig1Arg;
+        var stringXa = "data:image/jpg;base64,";
+        var stringXb = xxx;
+        var stringX = stringXa + stringXb;
+        imageObj.src = stringX;
+
+       //var yyy = fig2Arg;
+       // var stringXaa = "data:image/jpg;base64,";
+     //   var stringXbb = yyy;
+      //  var stringXx = stringXaa + stringXbb;
+      // imageObj2.src = stringXx;
+
+//setTimeout(function(){context.drawImage(imageObj, 0, 0)},0); // setTimeout je postavljen na 0ms (najbrž setTimeout èaka na canvas dogodek, nato pa se sproži, èe zadevo uporabimo brez setTimeout, zadeva ne bo delovala)
+//setTimeout(function(){context2.drawImage(imageObj2, 0, 0)},0);
+
+}  
+ 
+    function posljizahtevo() {
+        socket1.emit("pridobisliko", 1); // strežniku pošljemo "testpovezave" - to je "testpovezave" v testsocket01.js = klic funkcije "testpovezave" na strežniku
+        }
+
+    socket1.on("posredujBase64string", function (data1) { // kadarkoli se bo server povezal na klienta, bo pogledal v del, kjer je socket.on, da najde ustrezno funkcijo t.j. "testzadeve" z data "Pozdravljen svet!"
+
+      akcija(data1, posredujSliko); // uporabljena callback funkcija
+       
+    });
+
+ //******************************************************************************
+ // Trikotnik ZAÈETEK
+ //******************************************************************************    
+
+socket1.on("posredujTrikotnik", function (trikotnikTockeX, trikotnikTockeY) { // èe strežnik posreduje toèko se izvede to ->
+
+  //  var node=document.createElement("tr"); // ustvarimo spremenljivko node kot vrstico tabele za izpis
+  //  var textnode=document.createTextNode("Trikotnik->" + trikotnikTockeX + " " + trikotnikTockeY); // ustvarimo element s tekstom (vrednost stanja)
+	//node.appendChild(textnode); // dodamo izpis k "node" t.j. vrstici tabele
+    //document.getElementById("izpis").appendChild(node); // izpišemo v <div> "izpis"
+
+
+//setTimeout(function(){context3.clearRect(0, 0, 640, 480);context3.beginPath();},500);
+
+//if ((bufferDvojePraznih [0] + bufferDvojePraznih [1] + bufferDvojePraznih [2] + bufferDvojePraznih [3]) == 4) { // uporabimo "debounce buffer", vsaj ena od treh zaporednih vrednosti mora biti enaka 1
+    context3.clearRect(0, 0, 640, 480);
+//}    
+context3.beginPath();  // beginPath moramo dodati, da briše èrte
+//var context3 = canvas3.getContext('2d');
+context3.strokeStyle='#ff0000';
+context3.lineWidth=10;
+context3.setLineDash([0]);
+
+//var canvas3 = document.getElementById('myCanvas3');
+//      var context3 = canvas3.getContext('2d');
+
+//context3.clearRect(0, 0, canvas3.width, canvas3.height);
+
+//context3.fillStyle="#ffffff";
+//context3.fillRect(0,0,320,240);
+//context3.stroke();
+
+context3.moveTo(trikotnikTockeX[0],trikotnikTockeY[0]);
+context3.lineTo(trikotnikTockeX[1],trikotnikTockeY[1]);
+context3.lineTo(trikotnikTockeX[2],trikotnikTockeY[2]);
+context3.lineTo(trikotnikTockeX[0],trikotnikTockeY[0]);
+context3.stroke();
+
+koordinataCentraTrikotnikaX = (trikotnikTockeX[0] + trikotnikTockeX[1] + trikotnikTockeX[2]) / 3;
+koordinataCentraTrikotnikaY = (trikotnikTockeY[0] + trikotnikTockeY[1] + trikotnikTockeY[2]) / 3;
+
+context3.beginPath();
+context3.strokeStyle='#ffffff';
+context3.lineWidth=3;
+context3.setLineDash([5]);
+
+context3.moveTo(koordinataCentraTrikotnikaX,koordinataCentraTrikotnikaY+120);
+context3.lineTo(koordinataCentraTrikotnikaX,koordinataCentraTrikotnikaY-120);
+context3.moveTo(koordinataCentraTrikotnikaX-120,koordinataCentraTrikotnikaY);
+context3.lineTo(koordinataCentraTrikotnikaX+120,koordinataCentraTrikotnikaY);
+
+context3.stroke();
+/*
+// izrišemo navpièno èrto za center
+context3.beginPath();
+context3.strokeStyle='#ffa500';
+context3.lineWidth=1;
+context3.setLineDash([9]);
+
+context3.moveTo(320,480);
+context3.lineTo(320,0);
+
+context3.stroke();
+*/
+//izrišemo navpièno èrto levo
+context3.beginPath();
+context3.strokeStyle='#cccccc';
+context3.lineWidth=3;
+context3.setLineDash([9]);
+
+context3.moveTo(310,480);
+context3.lineTo(310,0);
+
+context3.stroke();
+
+//izrišemo navpièno èrto desno
+context3.beginPath();
+context3.strokeStyle='#cccccc';
+context3.lineWidth=3;
+context3.setLineDash([9]);
+
+context3.moveTo(330,480);
+context3.lineTo(330,0);
+
+context3.stroke();
+
+
+//context3.fillRect(koordinataCentraTrikotnikaX-5,koordinataCentraTrikotnikaY-5,10,10);
+
+
+
+document.getElementById("izpis0").innerHTML = "x = " + koordinataCentraTrikotnikaX.toFixed(0);
+document.getElementById("izpis1").innerHTML = " | y = " + koordinataCentraTrikotnikaY.toFixed(0);
+       
+    });
+
+//******************************************************************************
+// Trikotnik KONEC
+//****************************************************************************** 
+
+
+//******************************************************************************
+// Pravokotnik ZAÈETEK
+//******************************************************************************
+    socket1.on("posredujPravokotnik", function (pravokotnikTockeX, pravokotnikTockeY) { // èe strežnik posreduje toèko se izvede to ->
+
+  //  var node=document.createElement("tr"); // ustvarimo spremenljivko node kot vrstico tabele za izpis
+  //  var textnode=document.createTextNode("Trikotnik->" + trikotnikTockeX + " " + trikotnikTockeY); // ustvarimo element s tekstom (vrednost stanja)
+	//node.appendChild(textnode); // dodamo izpis k "node" t.j. vrstici tabele
+    //document.getElementById("izpis").appendChild(node); // izpišemo v <div> "izpis"
+
+
+//setTimeout(function(){context3.clearRect(0, 0, 640, 480);context3.beginPath();},500);
+
+//context3.clearRect(0, 0, 640, 480);
+context3.beginPath();  // beginPath moramo dodati, da briše èrte
+//var context3 = canvas3.getContext('2d');
+context3.strokeStyle='#00ff00';
+context3.lineWidth=10;
+context3.setLineDash([0]);
+
+//var canvas3 = document.getElementById('myCanvas3');
+//      var context3 = canvas3.getContext('2d');
+
+//if ((bufferDvojePraznih [0] + bufferDvojePraznih [1] + bufferDvojePraznih [2] + bufferDvojePraznih [3]) == 4) { // uporabimo "debounce buffer", vsaj ena od treh zaporednih vrednosti mora biti enaka 1
+context3.clearRect(0, 0, canvas3.width, canvas3.height);
+//}
+
+//context3.fillStyle="#ffffff";
+//context3.fillRect(0,0,320,240);
+//context3.stroke();
+
+context3.moveTo(pravokotnikTockeX[0],pravokotnikTockeY[0]);
+context3.lineTo(pravokotnikTockeX[1],pravokotnikTockeY[1]);
+context3.lineTo(pravokotnikTockeX[2],pravokotnikTockeY[2]);
+context3.lineTo(pravokotnikTockeX[3],pravokotnikTockeY[3]);
+context3.lineTo(pravokotnikTockeX[0],pravokotnikTockeY[0]);
+context3.stroke();
+
+koordinataCentraPravokotnikaX = (pravokotnikTockeX[0] + pravokotnikTockeX[1] + pravokotnikTockeX[2] + pravokotnikTockeX[3])/ 4;
+koordinataCentraPravokotnikaY = (pravokotnikTockeY[0] + pravokotnikTockeY[1] + pravokotnikTockeY[2] + pravokotnikTockeY[3]) / 4;
+
+context3.beginPath();
+context3.strokeStyle='#ffffff';
+context3.lineWidth=3;
+context3.setLineDash([5]);
+
+context3.moveTo(koordinataCentraPravokotnikaX,koordinataCentraPravokotnikaY+120);
+context3.lineTo(koordinataCentraPravokotnikaX,koordinataCentraPravokotnikaY-120);
+context3.moveTo(koordinataCentraPravokotnikaX-120,koordinataCentraPravokotnikaY);
+context3.lineTo(koordinataCentraPravokotnikaX+120,koordinataCentraPravokotnikaY);
+
+//context3.fillRect(koordinataCentraTrikotnikaX-5,koordinataCentraTrikotnikaY-5,10,10);
+
+context3.stroke();
+
+//izrišemo navpièno èrto levo
+context3.beginPath();
+context3.strokeStyle='#cccccc';
+context3.lineWidth=3;
+context3.setLineDash([9]);
+
+context3.moveTo(310,480);
+context3.lineTo(310,0);
+
+context3.stroke();
+
+//izrišemo navpièno èrto desno
+context3.beginPath();
+context3.strokeStyle='#cccccc';
+context3.lineWidth=3;
+context3.setLineDash([9]);
+
+context3.moveTo(330,480);
+context3.lineTo(330,0);
+
+context3.stroke();
+
+document.getElementById("izpis00").innerHTML = "x = " + koordinataCentraPravokotnikaX.toFixed(0);
+document.getElementById("izpis11").innerHTML = " | y = " + koordinataCentraPravokotnikaY.toFixed(0);
+       
+    });
+// *****************************************************************************
+// Pravokotnik KONEC
+// *****************************************************************************
+
+socket1.on("brisiPlatno", function() {
+	if ((bufferDvojePraznih [0] + bufferDvojePraznih [1] + bufferDvojePraznih [2] + bufferDvojePraznih [3]) == 4) { // uporabimo "debounce buffer", vsaj ena od treh zaporednih vrednosti mora biti enaka 1
+	context3.clearRect(0, 0, 640, 480);
+	//izrišemo navpièno èrto levo
+	context3.beginPath();
+	context3.strokeStyle='#cccccc';
+	context3.lineWidth=3;
+	context3.setLineDash([9]);
+
+	context3.moveTo(310,480);
+	context3.lineTo(310,0);
+
+	context3.stroke();
+
+	//izrišemo navpièno èrto desno
+	context3.beginPath();
+	context3.strokeStyle='#cccccc';
+	context3.lineWidth=3;
+	context3.setLineDash([9]);
+
+	context3.moveTo(330,480);
+	context3.lineTo(330,0);
+
+	context3.stroke();
+	}
+});
+
+socket1.on("onTarget", function() {
+	context3.fillStyle='#ffffff';
+	context3.globalAlpha = 0.5;
+	context3.fillRect(312,1,16,479);
+	context3.globalAlpha = 1;
+	//context3.globalAlpha = 1;
+	//context3.fillRect(317,0,6,50);
+	//context3.fillRect(317,430,6,50);
+	
+	//context3.setLineDash([0]);
+	//context3.lineWidth=4;
+	//context3.beginPath();
+	//context3.arc(320,18,4,0,2*Math.PI);
+	//context3.stroke();
+});
+
+  socket1.on("trikotnikObstajaNeObstaja", function (data) { // kadarkoli se bo server povezal na klienta, bo pogledal v del, kjer je socket.on, da najde ustrezno funkcijo t.j. "testzadeve" z data "Pozdravljen svet!"
+
+//	  if (data == 0) {
+//		  context3.clearRect(0, 0, 640, 480);
+//		  };
+
+	  log("Trikotnik obstaja = " + data + " | " + stevec);
+
+     
+    });
+
+  socket1.on("pravokotnikObstajaNeObstaja", function (data) { // kadarkoli se bo server povezal na klienta, bo pogledal v del, kjer je socket.on, da najde ustrezno funkcijo t.j. "testzadeve" z data "Pozdravljen svet!"
+
+	  log("Pravokotnik obstaja = " + data + " | " + stevec);
+
+//	  if (data == 0) {
+//		  context3.clearRect(0, 0, 640, 480);
+//		  }
+
+     
+    }); 
+
+// ***************************************************************************
+// NOVA KODA ZAÈETEK
+// ***************************************************************************
+ 
+ 
+ //******************************************************************************
+ // Trikotnik ZAÈETEK
+ //******************************************************************************    
+
+socket4.on("posredujTrikotnik", function (trikotnikTockeX, trikotnikTockeY) { // èe strežnik posreduje toèko se izvede to ->
+
+  //  var node=document.createElement("tr"); // ustvarimo spremenljivko node kot vrstico tabele za izpis
+  //  var textnode=document.createTextNode("Trikotnik->" + trikotnikTockeX + " " + trikotnikTockeY); // ustvarimo element s tekstom (vrednost stanja)
+	//node.appendChild(textnode); // dodamo izpis k "node" t.j. vrstici tabele
+    //document.getElementById("izpis").appendChild(node); // izpišemo v <div> "izpis"
+
+
+//setTimeout(function(){context3.clearRect(0, 0, 640, 480);context3.beginPath();},500);
+
+//if ((bufferDvojePraznih [0] + bufferDvojePraznih [1] + bufferDvojePraznih [2] + bufferDvojePraznih [3]) == 4) { // uporabimo "debounce buffer", vsaj ena od treh zaporednih vrednosti mora biti enaka 1
+    context3.clearRect(0, 0, 640, 480);
+//}
+context3.beginPath();  // beginPath moramo dodati, da briše èrte
+//var context3 = canvas3.getContext('2d');
+context3.strokeStyle='#ff0000';
+context3.lineWidth=10;
+context3.setLineDash([0]);
+
+//var canvas3 = document.getElementById('myCanvas3');
+//      var context3 = canvas3.getContext('2d');
+
+//context3.clearRect(0, 0, canvas3.width, canvas3.height);
+
+//context3.fillStyle="#ffffff";
+//context3.fillRect(0,0,320,240);
+//context3.stroke();
+
+context3.moveTo(trikotnikTockeX[0],trikotnikTockeY[0]);
+context3.lineTo(trikotnikTockeX[1],trikotnikTockeY[1]);
+context3.lineTo(trikotnikTockeX[2],trikotnikTockeY[2]);
+context3.lineTo(trikotnikTockeX[0],trikotnikTockeY[0]);
+context3.stroke();
+
+koordinataCentraTrikotnikaX = (trikotnikTockeX[0] + trikotnikTockeX[1] + trikotnikTockeX[2]) / 3;
+koordinataCentraTrikotnikaY = (trikotnikTockeY[0] + trikotnikTockeY[1] + trikotnikTockeY[2]) / 3;
+
+context3.beginPath();
+context3.strokeStyle='#ffffff';
+context3.lineWidth=3;
+context3.setLineDash([5]);
+
+context3.moveTo(koordinataCentraTrikotnikaX,koordinataCentraTrikotnikaY+120);
+context3.lineTo(koordinataCentraTrikotnikaX,koordinataCentraTrikotnikaY-120);
+context3.moveTo(koordinataCentraTrikotnikaX-120,koordinataCentraTrikotnikaY);
+context3.lineTo(koordinataCentraTrikotnikaX+120,koordinataCentraTrikotnikaY);
+
+context3.stroke();
+/*
+// izrišemo navpièno èrto za center
+context3.beginPath();
+context3.strokeStyle='#ffa500';
+context3.lineWidth=1;
+context3.setLineDash([9]);
+
+context3.moveTo(320,480);
+context3.lineTo(320,0);
+
+context3.stroke();
+*/
+//izrišemo navpièno èrto levo
+context3.beginPath();
+context3.strokeStyle='#cccccc';
+context3.lineWidth=3;
+context3.setLineDash([9]);
+
+context3.moveTo(310,480);
+context3.lineTo(310,0);
+
+context3.stroke();
+
+//izrišemo navpièno èrto desno
+context3.beginPath();
+context3.strokeStyle='#cccccc';
+context3.lineWidth=3;
+context3.setLineDash([9]);
+
+context3.moveTo(330,480);
+context3.lineTo(330,0);
+
+context3.stroke();
+
+
+//context3.fillRect(koordinataCentraTrikotnikaX-5,koordinataCentraTrikotnikaY-5,10,10);
+
+
+
+document.getElementById("izpis0").innerHTML = "x = " + koordinataCentraTrikotnikaX.toFixed(0);
+document.getElementById("izpis1").innerHTML = " | y = " + koordinataCentraTrikotnikaY.toFixed(0);
+       
+    });
+
+//******************************************************************************
+// Trikotnik KONEC
+//****************************************************************************** 
+
+
+//******************************************************************************
+// Pravokotnik ZAÈETEK
+//******************************************************************************
+    socket4.on("posredujPravokotnik", function (pravokotnikTockeX, pravokotnikTockeY) { // èe strežnik posreduje toèko se izvede to ->
+
+  //  var node=document.createElement("tr"); // ustvarimo spremenljivko node kot vrstico tabele za izpis
+  //  var textnode=document.createTextNode("Trikotnik->" + trikotnikTockeX + " " + trikotnikTockeY); // ustvarimo element s tekstom (vrednost stanja)
+	//node.appendChild(textnode); // dodamo izpis k "node" t.j. vrstici tabele
+    //document.getElementById("izpis").appendChild(node); // izpišemo v <div> "izpis"
+
+
+//setTimeout(function(){context3.clearRect(0, 0, 640, 480);context3.beginPath();},500);
+
+//context3.clearRect(0, 0, 640, 480);
+context3.beginPath();  // beginPath moramo dodati, da briše èrte
+//var context3 = canvas3.getContext('2d');
+context3.strokeStyle='#00ff00';
+context3.lineWidth=10;
+context3.setLineDash([0]);
+
+//var canvas3 = document.getElementById('myCanvas3');
+//      var context3 = canvas3.getContext('2d');
+
+//if ((bufferDvojePraznih [0] + bufferDvojePraznih [1] + bufferDvojePraznih [2] + bufferDvojePraznih [3]) == 4) { // uporabimo "debounce buffer", vsaj ena od treh zaporednih vrednosti mora biti enaka 1
+context3.clearRect(0, 0, canvas3.width, canvas3.height);
+//}
+
+//context3.fillStyle="#ffffff";
+//context3.fillRect(0,0,320,240);
+//context3.stroke();
+
+context3.moveTo(pravokotnikTockeX[0],pravokotnikTockeY[0]);
+context3.lineTo(pravokotnikTockeX[1],pravokotnikTockeY[1]);
+context3.lineTo(pravokotnikTockeX[2],pravokotnikTockeY[2]);
+context3.lineTo(pravokotnikTockeX[3],pravokotnikTockeY[3]);
+context3.lineTo(pravokotnikTockeX[0],pravokotnikTockeY[0]);
+context3.stroke();
+
+koordinataCentraPravokotnikaX = (pravokotnikTockeX[0] + pravokotnikTockeX[1] + pravokotnikTockeX[2] + pravokotnikTockeX[3])/ 4;
+koordinataCentraPravokotnikaY = (pravokotnikTockeY[0] + pravokotnikTockeY[1] + pravokotnikTockeY[2] + pravokotnikTockeY[3]) / 4;
+
+context3.beginPath();
+context3.strokeStyle='#ffffff';
+context3.lineWidth=3;
+context3.setLineDash([5]);
+
+context3.moveTo(koordinataCentraPravokotnikaX,koordinataCentraPravokotnikaY+120);
+context3.lineTo(koordinataCentraPravokotnikaX,koordinataCentraPravokotnikaY-120);
+context3.moveTo(koordinataCentraPravokotnikaX-120,koordinataCentraPravokotnikaY);
+context3.lineTo(koordinataCentraPravokotnikaX+120,koordinataCentraPravokotnikaY);
+
+//context3.fillRect(koordinataCentraTrikotnikaX-5,koordinataCentraTrikotnikaY-5,10,10);
+
+context3.stroke();
+
+//izrišemo navpièno èrto levo
+context3.beginPath();
+context3.strokeStyle='#cccccc';
+context3.lineWidth=3;
+context3.setLineDash([9]);
+
+context3.moveTo(310,480);
+context3.lineTo(310,0);
+
+context3.stroke();
+
+//izrišemo navpièno èrto desno
+context3.beginPath();
+context3.strokeStyle='#cccccc';
+context3.lineWidth=3;
+context3.setLineDash([9]);
+
+context3.moveTo(330,480);
+context3.lineTo(330,0);
+
+context3.stroke();
+
+document.getElementById("izpis00").innerHTML = "x = " + koordinataCentraPravokotnikaX.toFixed(0);
+document.getElementById("izpis11").innerHTML = " | y = " + koordinataCentraPravokotnikaY.toFixed(0);
+       
+    });
+// *****************************************************************************
+// Pravokotnik KONEC
+// *****************************************************************************
+
+socket4.on("brisiPlatno", function() {
+	if ((bufferDvojePraznih [0] + bufferDvojePraznih [1] + bufferDvojePraznih [2] + bufferDvojePraznih [3]) == 4) { // uporabimo "debounce buffer", vsaj ena od treh zaporednih vrednosti mora biti enaka 1
+	context3.clearRect(0, 0, 640, 480);
+	//izrišemo navpièno èrto levo
+	context3.beginPath();
+	context3.strokeStyle='#cccccc';
+	context3.lineWidth=3;
+	context3.setLineDash([9]);
+
+	context3.moveTo(310,480);
+	context3.lineTo(310,0);
+
+	context3.stroke();
+
+	//izrišemo navpièno èrto desno
+	context3.beginPath();
+	context3.strokeStyle='#cccccc';
+	context3.lineWidth=3;
+	context3.setLineDash([9]);
+
+	context3.moveTo(330,480);
+	context3.lineTo(330,0);
+
+	context3.stroke();
+	}
+});
+
+socket4.on("onTarget", function() {
+	context3.fillStyle='#ffffff';
+	context3.globalAlpha = 0.5;
+	context3.fillRect(312,1,16,479);
+	context3.globalAlpha = 1;
+	//context3.globalAlpha = 1;
+	//context3.fillRect(317,0,6,50);
+	//context3.fillRect(317,430,6,50);
+	
+	//context3.setLineDash([0]);
+	//context3.lineWidth=4;
+	//context3.beginPath();
+	//context3.arc(320,18,4,0,2*Math.PI);
+	//context3.stroke();
+});
+
+  socket4.on("trikotnikObstajaNeObstaja", function (data) { // kadarkoli se bo server povezal na klienta, bo pogledal v del, kjer je socket.on, da najde ustrezno funkcijo t.j. "testzadeve" z data "Pozdravljen svet!"
+
+//	  if (data == 0) {
+//		  context3.clearRect(0, 0, 640, 480);
+//		  };
+
+	  log("Trikotnik obstaja = " + data + " | " + stevec);
+
+     
+    });
+
+  socket4.on("pravokotnikObstajaNeObstaja", function (data) { // kadarkoli se bo server povezal na klienta, bo pogledal v del, kjer je socket.on, da najde ustrezno funkcijo t.j. "testzadeve" z data "Pozdravljen svet!"
+
+	  log("Pravokotnik obstaja = " + data + " | " + stevec);
+
+//	  if (data == 0) {
+//		  context3.clearRect(0, 0, 640, 480);
+//		  }
+
+     
+    }); 
+
+// ***************************************************************************
+// NOVA KODA KONEC
+// ***************************************************************************
+
+
+  
+  function log(msg) { // funkcija za izpis sporoèil z izvedenim pomikom (scroll)
+      var node=document.createElement("tr"); // ustvarimo spremenljivko node kot vrstico tabele za izpis
+      var textnode=document.createTextNode(stevec + " | " + msg); // ustvarimo element s tekstom (vrednost stanja)
+      node.appendChild(textnode); // dodamo izpis k "node" t.j. vrstici tabele
+  	output.insertBefore(node,output.childNodes[0]); // output je spremenljivka div-a t.j. output = document.getElementById("output")
+          if (stevec > 9) { // èe je vrstic veè kot 10 (šteti zaènemo z 0)
+              output.removeChild(output.childNodes[10],output.childNodes[10]); // odstranimo najstarejši zapis
+  		}
+      stevec = stevec + 1; // poveèamo števec števila izpisanih sporoèil
+  }
+/*
+// ******************** iz datoteke ros12.html
+buttonOn.addEventListener('click', function() {
+	socket1.emit("sporociloStrezniku", "Gumb On pritisnjen na html strani servirani iz naslova: " + robotIP00);
+    socket1.emit("ukazArduinu", {"stevilkaUkaza": 1});
+    //, "sporocilo": "Gumb On pritisnjen na html strani servirani iz naslova: " + robotIP00});
+    //socket2.emit("ukazArduinu", {"stevilkaUkaza": 1});
+    //socket3.emit("ukazArduinu", {"stevilkaUkaza": 1});
+    //, "sporocilo": "Gumb On pritisnjen na html strani servirani iz naslova: " + robotIP00});
+});
+
+buttonOff.addEventListener('click', function() {
+	socket1.emit("sporociloStrezniku", "Gumb Off pritisnjen na html strani servirani iz naslova: " + robotIP00);
+    socket1.emit("ukazArduinu", {"stevilkaUkaza": 0});
+    //, "sporocilo": "Gumb Off pritisnjen na html strani servirani iz naslova: " + robotIP00});
+    //socket2.emit("ukazArduinu", {"stevilkaUkaza": 0});
+    //socket3.emit("ukazArduinu", {"stevilkaUkaza": 0});
+    //, "sporocilo": "Gumb Off pritisnjen na html strani servirani iz naslova: " + robotIP00});
+});   
+*/
+
+buttonZgrabi.addEventListener('click', function() {
+	toggle = 1 - toggle;
+
+	if (toggle == 1) {
+		socket1.emit("ukazArduinu", {"stevilkaUkaza": 91});
+		document.getElementById("zgrabi").innerText = "Spusti";
+		}
+	else if (toggle == 0) {
+		socket1.emit("ukazArduinu", {"stevilkaUkaza": 90});
+		document.getElementById("zgrabi").innerText = "Zgrabi";
+		}
+
+	
+	//socket1.emit("akcija2", toggle);
+	//if (toggle == 0) {
+	//setTimeout(function () {
+	//context.fillStyle='#f87431';
+	//context.globalAlpha = 0.4;
+	//context.fillRect(0,0,640,480);}, 1000);
+
+    //, "sporocilo": "Gumb On pritisnjen na html strani servirani iz naslova: " + robotIP00});
+    //socket2.emit("ukazArduinu", {"stevilkaUkaza": 1});
+    //socket3.emit("ukazArduinu", {"stevilkaUkaza": 1});
+    //, "sporocilo": "Gumb On pritisnjen na html strani servirani iz naslova: " + robotIP00});
+    });
+
+    buttonLedWhite.addEventListener('click', function() {
+    	toggle2 = 1 - toggle2;
+
+    	if (toggle2 == 1) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 41});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 41});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 41});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 41});
+    		document.getElementById("ledwhite").innerText = "wLED OFF";
+    		}
+    	else if (toggle2 == 0) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 40});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 40});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 40});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 40});
+    		document.getElementById("ledwhite").innerText = "wLED ON";
+    		}
+
+    	
+    	//socket1.emit("akcija2", toggle);
+    	//if (toggle == 0) {
+    	//setTimeout(function () {
+    	//context.fillStyle='#f87431';
+    	//context.globalAlpha = 0.4;
+    	//context.fillRect(0,0,640,480);}, 1000);
+
+        //, "sporocilo": "Gumb On pritisnjen na html strani servirani iz naslova: " + robotIP00});
+        //socket2.emit("ukazArduinu", {"stevilkaUkaza": 1});
+        //socket3.emit("ukazArduinu", {"stevilkaUkaza": 1});
+        //, "sporocilo": "Gumb On pritisnjen na html strani servirani iz naslova: " + robotIP00});
+        });
+
+
+    buttonLedYellow.addEventListener('click', function() {
+    	toggle3 = 1 - toggle3;
+
+    	if (toggle3 == 1) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 71});
+    		document.getElementById("ledyellow").innerText = "yLED OFF";
+    		}
+    	else if (toggle3 == 0) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 70});
+    		document.getElementById("ledyellow").innerText = "yLED ON";
+    		}
+
+    	
+  
+        });
+
+    buttonLedBlue.addEventListener('click', function() {
+    	toggle4 = 1 - toggle4;
+
+    	if (toggle4 == 1) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 81});
+    		document.getElementById("ledblue").innerText = "bLED OFF";
+    		}
+    	else if (toggle4 == 0) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 80});
+    		document.getElementById("ledblue").innerText = "bLED ON";
+    		}
+
+    	
+  
+        });
+
+   buttonLedGreen.addEventListener('click', function() {
+    	toggle5 = 1 - toggle5;
+
+    	if (toggle5 == 1) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 121});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 121});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 121});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 121});
+    		document.getElementById("ledgreen").innerText = "gLED OFF";
+    		}
+    	else if (toggle5 == 0) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 120});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 120});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 120});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 120});
+    		document.getElementById("ledgreen").innerText = "gLED ON";
+    		}
+
+    	
+  
+        });
+
+  buttonLedRed.addEventListener('click', function() {
+    	toggle6 = 1 - toggle6;
+
+    	if (toggle6 == 1) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 131});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 131});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 131});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 131});
+    		document.getElementById("ledred").innerText = "rLED OFF";
+    		}
+    	else if (toggle6 == 0) {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 130});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 130});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 130});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 130});
+    		document.getElementById("ledred").innerText = "rLED ON";
+    		}
+
+    	
+  
+        });
+
+
+buttonLedsOff.addEventListener('click', function() {
+    	toggle7 = 1 - toggle7;
+
+    	if (toggle7 == 0) {
+  			socket1.emit("ukazArduinu", {"stevilkaUkaza": 41});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 41});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 41});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 41});
+    			socket1.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 71});
+ 			socket1.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 81});
+    			socket1.emit("ukazArduinu", {"stevilkaUkaza": 121});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 121});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 121});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 121});
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 131});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 131});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 131});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 131});
+    		document.getElementById("ledsoff").innerText = "LEDs OFF";
+    		}
+    	else if (toggle7 == 1) {
+  			socket1.emit("ukazArduinu", {"stevilkaUkaza": 40});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 40});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 40});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 40});
+    			socket1.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 80});
+    			socket1.emit("ukazArduinu", {"stevilkaUkaza": 120});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 120});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 120});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 120});
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 130});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 130});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 130});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 130});
+    		document.getElementById("ledsoff").innerText = "LEDs ON";
+    		}
+
+    	
+  
+        });
+
+
+
+
+
+        buttonForward.addEventListener('click', function() {
+        		socket1.emit("ukazArduinu", {"stevilkaUkaza": 777});
+    			socket2.emit("ukazArduinu", {"stevilkaUkaza": 777});
+    			socket3.emit("ukazArduinu", {"stevilkaUkaza": 777});
+    			socket4.emit("ukazArduinu", {"stevilkaUkaza": 777});
+            });
+
+        buttonBackward.addEventListener('click', function() {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 888});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 888});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 888});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 888});
+        });
+
+        buttonStop.addEventListener('click', function() {
+    		socket1.emit("ukazArduinu", {"stevilkaUkaza": 999});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 999});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 999});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 999});
+        });
+
+        buttonLeftforward.addEventListener('click', function() {
+     		socket1.emit("ukazArduinu", {"stevilkaUkaza": 7771});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 7771});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 7771});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 7771});
+            });
+        buttonRightforward.addEventListener('click', function() {
+     		socket1.emit("ukazArduinu", {"stevilkaUkaza": 7772});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 7772});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 7772});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 7772});
+        });
+        buttonSpinleft.addEventListener('click', function() {
+     		socket1.emit("ukazArduinu", {"stevilkaUkaza": 9991});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 9991});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 9991});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 9991});
+        });
+        buttonSpinright.addEventListener('click', function() {
+		socket1.emit("ukazArduinu", {"stevilkaUkaza": 9992});
+		socket2.emit("ukazArduinu", {"stevilkaUkaza": 9992});
+		socket3.emit("ukazArduinu", {"stevilkaUkaza": 9992});
+		socket4.emit("ukazArduinu", {"stevilkaUkaza": 9992});
+        });
+        buttonLeftbackward.addEventListener('click', function() {
+     		socket1.emit("ukazArduinu", {"stevilkaUkaza": 8881});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 8881});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 8881});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 8881});
+        });	
+        buttonRightbackward.addEventListener('click', function() {
+     		socket1.emit("ukazArduinu", {"stevilkaUkaza": 8882});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 8882});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 8882});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 8882});
+        });
+        buttonTiltup.addEventListener('click', function() {
+     		socket1.emit("ukazArduinu", {"stevilkaUkaza": 9999});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 9999});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 9999});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 9999});
+        });
+        buttonTiltdown.addEventListener('click', function() {
+     		socket1.emit("ukazArduinu", {"stevilkaUkaza": 9998});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 9998});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 9998});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 9998});
+        });
+
+
+
+        
+        
+
+
+        
+    
+
+socket1.on('sporociloKlientu', function(msg) {
+    log(msg);
+});
+
+socket3.on('sporociloKlientu', function(msg) {
+    log(msg);
+});
+
+//socket2.on('sporociloKlientu', function(msg) {
+//    log(msg);
+//});
+
+//socket3.on('sporociloKlientu', function(msg) {
+///    log(msg);
+//});
+
+socket1.on('pritisnjenaTipka', function(data) {
+    //socket1.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+        //, "sporocilo": data.sporocilo});
+
+	if (data.stUkaza == 111 || data.stUkaza == 222 || data.stUkaza == 333 || data.stUkaza == 444) {
+		bufferDvojePraznih.splice(0,1); // na mestu 0 v polju y izbrišemo eno vrednost
+		bufferDvojePraznih[3] = 1; // na zadnjem mestu, t.j. 1 pa dodamo novo vrednost, da imamo skupaj 2 vrednosti
+	}
+	else {
+		bufferDvojePraznih.splice(0,1); // na mestu 0 v polju y izbrišemo eno vrednost
+		bufferDvojePraznih[3] = 0; // na zadnjem mestu, t.j. 1 pa dodamo novo vrednost, da imamo skupaj 2 vrednosti
+	}
+
+	if (data.stUkaza == 111 || data.stUkaza == 222 || data.stUkaza == 333 || data.stUkaza == 444) {
+
+	if ((bufferDvojePraznih [0] + bufferDvojePraznih [1] + bufferDvojePraznih [2] + bufferDvojePraznih [3]) == 4) { // uporabimo "debounce buffer", vsaj ena od treh zaporednih vrednosti mora biti enaka 1
+		if (data.stUkaza == 111 || data.stUkaza == 333) { // èe ni trikotnika pošljemo le-to
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 0});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 0});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 0});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 0});
+			
+		}
+		else if (data.stUkaza == 222 || data.stUkaza == 444) { // èe ni kvadrata pošljemo le-to
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 2});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 2});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 2});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 2});
+			
+		}  
+	}
+	}
+	else {
+		   socket1.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+		   socket2.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+		   socket3.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+		   socket4.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+		   console.log(data.stUkaza);
+	}
+	
+	//console.log(bufferDvojePraznih [0] + " " + bufferDvojePraznih [1] + " " + bufferDvojePraznih [2] + " " + bufferDvojePraznih [3]);
+	
+    
+
+   
+   // socket3.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+    //, "sporocilo": data.sporocilo});
+});
+
+socket3.on('pritisnjenaTipka', function(data) {
+    //socket1.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+        //, "sporocilo": data.sporocilo});
+
+	if (data.stUkaza == 111 || data.stUkaza == 222 || data.stUkaza == 333 || data.stUkaza == 444) {
+		bufferDvojePraznih.splice(0,1); // na mestu 0 v polju y izbrišemo eno vrednost
+		bufferDvojePraznih[3] = 1; // na zadnjem mestu, t.j. 1 pa dodamo novo vrednost, da imamo skupaj 2 vrednosti
+	}
+	else {
+		bufferDvojePraznih.splice(0,1); // na mestu 0 v polju y izbrišemo eno vrednost
+		bufferDvojePraznih[3] = 0; // na zadnjem mestu, t.j. 1 pa dodamo novo vrednost, da imamo skupaj 2 vrednosti
+	}
+
+	if (data.stUkaza == 111 || data.stUkaza == 222 || data.stUkaza == 333 || data.stUkaza == 444) {
+
+	if ((bufferDvojePraznih [0] + bufferDvojePraznih [1] + bufferDvojePraznih [2] + bufferDvojePraznih [3]) == 4) { // uporabimo "debounce buffer", vsaj ena od treh zaporednih vrednosti mora biti enaka 1
+		if (data.stUkaza == 111 || data.stUkaza == 333) { // èe ni trikotnika pošljemo le-to
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 0});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 0});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 0});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 0});
+			
+		}
+		else if (data.stUkaza == 222 || data.stUkaza == 444) { // èe ni kvadrata pošljemo le-to
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 2});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 2});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 2});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 2});
+			
+		}  
+	}
+	}
+	else {
+		   socket1.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+		   socket2.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+		   socket3.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+		   socket4.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+		   console.log(data.stUkaza);
+	}
+	
+	console.log(bufferDvojePraznih [0] + " " + bufferDvojePraznih [1]  + " " + bufferDvojePraznih [2]  + " " + bufferDvojePraznih [3]);
+    
+   //socket1.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+   //socket2.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+   
+   // socket3.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+    //, "sporocilo": data.sporocilo});
+});
+
+//***********GUMB zaèetek SOCKET2
+socket2.on('pritisnjenaTipka', function(data) {
+    //socket1.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+        //, "sporocilo": data.sporocilo});
+    log("Prva tipka");
+
+	if (data.stUkaza == 88) {
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 80});
+			context4.clearRect(0,0,640,30);
+
+			
+		}
+		else if (data.stUkaza == 99) {
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 81});
+			context4.fillStyle='#0000ff';
+			context4.fillRect(0,0,640,30);
+			
+		}  
+});
+//***********GUMB konec
+
+//***********GUMB zaèetek SOCKET4
+socket3.on('pritisnjenaTipka', function(data) {
+    //socket1.emit("ukazArduinu", {"stevilkaUkaza": data.stUkaza});
+        //, "sporocilo": data.sporocilo});
+//log("druga tipka ->" + data.stUkaza);
+	if (data.stUkaza == 88) {
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 70});
+			context4.clearRect(0,0,640,30);
+			
+		}
+		else if (data.stUkaza == 99) {
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket2.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket3.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			socket4.emit("ukazArduinu", {"stevilkaUkaza": 71});
+			context4.fillStyle='#ffff00';
+			context4.fillRect(0,0,640,30);
+			
+		}  
+});
+//***********GUMB konec
+    
+    
+levPWMplus.addEventListener('click', function() {
+    var stevilkaUkaza = 3;
+    pinNo = document.getElementById('val4').value;
+    document.getElementById('val5').value++; // povečamo vrednost PWM za 1
+    valuePWM = document.getElementById('val5').value;
+    socket1.emit("ukazArduinu", {"stevilkaUkaza": stevilkaUkaza, "pinNo": pinNo, "valuePWM": valuePWM});
+});
+
+levPWMminus.addEventListener('click', function() {
+    var stevilkaUkaza = 3;
+    pinNo = document.getElementById('val4').value;
+    document.getElementById('val5').value--; // povečamo vrednost PWM za 1
+    valuePWM = document.getElementById('val5').value;
+    socket1.emit("ukazArduinu", {"stevilkaUkaza": stevilkaUkaza, "pinNo": pinNo, "valuePWM": valuePWM});
+});    
+    
+desPWMplus.addEventListener('click', function() {
+    var stevilkaUkaza = 3;
+    pinNo = document.getElementById('val6').value;
+    document.getElementById('val7').value++; // povečamo vrednost PWM za 1
+    valuePWM = document.getElementById('val7').value;
+    socket1.emit("ukazArduinu", {"stevilkaUkaza": stevilkaUkaza, "pinNo": pinNo, "valuePWM": valuePWM});
+});
+
+desPWMminus.addEventListener('click', function() {
+    var stevilkaUkaza = 3;
+    pinNo = document.getElementById('val6').value;
+    document.getElementById('val7').value--; // povečamo vrednost PWM za 1
+    valuePWM = document.getElementById('val7').value;
+    socket1.emit("ukazArduinu", {"stevilkaUkaza": stevilkaUkaza, "pinNo": pinNo, "valuePWM": valuePWM});
+}); 
+    
+send2.addEventListener('click', function() {
+    var stevilkaUkaza = 3;
+    pinNo = document.getElementById('val4').value;
+    valuePWM = document.getElementById('val5').value;
+    socket1.emit("ukazArduinu", {"stevilkaUkaza": stevilkaUkaza, "pinNo": pinNo, "valuePWM": valuePWM});
+});
+    
+send3.addEventListener('click', function() {
+    var stevilkaUkaza = 3;
+    pinNo = document.getElementById('val6').value;
+    valuePWM = document.getElementById('val7').value;
+    socket1.emit("ukazArduinu", {"stevilkaUkaza": stevilkaUkaza, "pinNo": pinNo, "valuePWM": valuePWM});
+}); 
+
+
+
+    
+</script>
+
+<body>
+    <form name='sendname' action='' method='get' />
+    
+    
+	
+    <!-- <input type='button' value='Prenesi jpg iz strežnika' onclick='posljizahtevo()' />  -->
+    
+    <div id="izpis"></div>
+    
+    
+    
+    
+</body>
+
+</html>
+
