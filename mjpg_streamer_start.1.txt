@@ -1,0 +1,3 @@
+sudo mjpg_streamer -i "input_uvc.so -r 640x360 -f 6" -o "output_file.so -c /usr/bin/mjpg-streamer-move-and-overwrite.sh"
+
+sudo node demo_Abot/demo_10.js

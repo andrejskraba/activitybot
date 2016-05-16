@@ -1,0 +1,5 @@
+node stream-server.js
+
+ffmpeg -s 640x360 -f video4linux2 -i /dev/video0 -f mpeg1video -b 400k -r 24 http://127.0.0.1:8082/pswd/640/360/
+
+node demo_11.js

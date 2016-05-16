@@ -1,0 +1,3 @@
+sudo node c9sdk/server.js --listen 192.168.1.131 -p 8181 -a cloudsto:cloudsto
+
+then go to: http://192.168.1.131:8181/ide.html
