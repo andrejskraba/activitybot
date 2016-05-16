@@ -8,7 +8,7 @@
         
         <style type="text/css">
 		#videoCanvas {
-			/* Always stretch the canvas to 320x240, regardless of its
+			/* Always stretch the canvas to 640x360, regardless of its
 			internal size. */
 			width: 640px;
 			height: 360px; 
@@ -18,21 +18,6 @@
     
 <style>
 body { font-family: courier; font-size: 12px; }
-
-
-#izpis00
-	{float: left;}
-#izpis11
-	{float: left;}
-
-#izpis0
-	{float: left;}
-#izpis1
-	{float: left;}
-#izpis2
-	{float: left;}
-#izpis3
-	{float: left;}	
 
 </style>    
 
@@ -118,14 +103,13 @@ var buttonZgrabi = document.getElementById('zgrabi') // dodamo spremenljivko za 
 	buttonZgrabi.addEventListener('click', function() {
 	toggle = 1 - toggle;
 	if (toggle == 1) {
-		socket1.emit("ukazArduinu", {"stevilkaUkaza": 91});
-		document.getElementById("zgrabi").innerText = "Zgrabi";
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 91});
+			document.getElementById("zgrabi").innerText = "Zgrabi";
 		}
 	else if (toggle == 0) {
-		socket1.emit("ukazArduinu", {"stevilkaUkaza": 90});
-		document.getElementById("zgrabi").innerText = "Spusti";
+			socket1.emit("ukazArduinu", {"stevilkaUkaza": 90});
+			document.getElementById("zgrabi").innerText = "Spusti";
 		}
-
     });
 	buttonForward.addEventListener('click', function() {
 		socket1.emit("ukazArduinu", {"stevilkaUkaza": 777});
@@ -200,7 +184,7 @@ var buttonZgrabi = document.getElementById('zgrabi') // dodamo spremenljivko za 
  		socket1.emit("ukazArduinu", {"stevilkaUkaza": 11172});
     });
     
-
+	// MINIMIZE NEXT LINE
 	(function(window){ 'use strict';
 
 // jsmpeg by Dominic Szablewski - phoboslab.org, github.com/phoboslab
@@ -2805,7 +2789,7 @@ BitReader.prototype.rewind = function(count) {
 	var client = new WebSocket("ws://"+robotIP00+streamPort);
 	var canvas = document.getElementById('videoCanvas');
 	var player = new jsmpeg(client, {canvas:canvas});
-		
+
 </script>
 
 </html>

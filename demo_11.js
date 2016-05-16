@@ -84,6 +84,9 @@ var CurrentSensorValue = 0;
 
 var TotalEnergy = 0;
 
+var tilt = 90; // spremenljivka za premik kamere - gor/dol t.j. "tilt"
+var tilt2 = 81; // spremenljivka za premik kamere - levo/desno t.j. "tilt2"
+
 //var firmata = require("firmata");
 
 //var board = new firmata.Board("/dev/ttyACM0",function(){
@@ -120,8 +123,8 @@ board.on("ready", function() {
     this.pinMode(CamHorisontalPin, five.Pin.SERVO);
 	console.log("Tilt servo 2"); 
     
-    this.servoWrite(CamVerticalPin,90); // kamero postavimo na izhodiščni kot, ki je podan s spremenljivko "tilt"
-    this.servoWrite(CamHorisontalPin,90); // kamero postavimo na izhodiščni kot, ki je podan s spremenljivko "tilt"
+    this.servoWrite(CamVerticalPin,tilt); // kamero postavimo na izhodiščni kot, ki je podan s spremenljivko "tilt"
+    this.servoWrite(CamHorisontalPin,tilt2); // kamero postavimo na izhodiščni kot, ki je podan s spremenljivko "tilt"
     
     var VoltageSensorPin = new five.Pin(voltagePin);
 	five.Pin.read(VoltageSensorPin, function(error, value) {
@@ -531,9 +534,6 @@ function CameraLeftRight()
 
 var CameraLeftRightControl=setInterval(function(){CameraLeftRight()}, 20);  
 //var cv = require('opencv');
-var tilt = 90; // spremenljivka za premik kamere - gor/dol t.j. "tilt"
-var tilt2 = 90; // spremenljivka za premik kamere - levo/desno t.j. "tilt2"
-
 
 var lowThresh = 1;
 var highThresh = 255;
@@ -586,7 +586,7 @@ function posredujSliko(outArg, imArg) { // drugi del za callback funkcijo
 
 
 function handler (req, res) { // handler za "response"; ta handler "handla" le datoteko index.html
-    fs.readFile(__dirname + "/demo_09.html",
+    fs.readFile(__dirname + "/demo_10.html",
     function (err, data) {
         if (err) {
             res.writeHead(500);
@@ -906,13 +906,23 @@ var pravokotnikObstaja = 0;
                     tilt2 = 179;
 	        	board.servoWrite(CamHorisontalPin,tilt2);
 	        }
+	   else if (data.stevilkaUkaza == "999339") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
+	            tilt = 90;
+	            tilt2 = 81;
+                board.servoWrite(CamHorisontalPin,tilt2);
+                board.servoWrite(CamVerticalPin,tilt);
+                CameraStop2 = true; 
+                CameraStop = true;
+	        }
 	   else if (data.stevilkaUkaza == "11171") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
         		Speed = Speed + 0.2*Speed;  
 			    if (Speed > 50)
 				    Speed = 50;
 	        }
         else if (data.stevilkaUkaza == "11172") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
-        		Speed = Speed - 0.2*Speed;  
+        		Speed = Speed - 0.2*Speed; 
+        		if (Speed < 0.1)
+        		    Speed = 0.1;
 	        }
 
 
