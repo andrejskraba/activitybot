@@ -17,6 +17,22 @@ for (var dev in ifaces) {
   });
 }
 
+var util = require('util');
+var log_file = fs.createWriteStream(__dirname + '/power.log', {flags : 'w'});
+var log_stdout = process.stdout;
+
+function writelog(d) { //
+  log_file.write(util.format(d) + '\n');
+  log_stdout.write(util.format(d) + '\n');
+}
+
+var log_file2 = fs.createWriteStream(__dirname + '/control.log', {flags : 'w'});
+var log_stdout2 = process.stdout;
+function writelog2(d) { //
+  log_file2.write(util.format(d) + '\n');
+  log_stdout2.write(util.format(d) + '\n');
+}
+
 var KpLeft = 1.8;
 var KiLeft = 1.05;
 var KdLeft = 0.08;
@@ -401,6 +417,7 @@ function frequencyMeasureLeftRight() {
 
     console.log("frequencyLeft " + frequencyLeft);
     console.log("frequencyRight " + frequencyRight);
+    writelog2(Date.now() + "\tfrequencyLeft\t" + frequencyLeft + "\tfrequencyRight\t" + frequencyRight + "\tPWMleft\t" + PWMleft + "\tPWMright\t" + PWMright);
     
     var VoltageValue = VoltageSensorValue/1024*2*5/1.025;
     var CurrentValue = (CurrentSensorValue-512)/38;
@@ -409,6 +426,7 @@ function frequencyMeasureLeftRight() {
     var PowerValue = VoltageValue*CurrentValue;
     TotalEnergy += PowerValue;
     console.log("Voltage = " + VoltageValue.toFixed(3) + "\tCurrent = " + CurrentValue.toFixed(3) + "\tPower = " + PowerValue.toFixed(3) + "\tEnergy = " + TotalEnergy.toFixed(3));
+    writelog(Date.now() + "\t" + VoltageValue.toFixed(3) + "\t" + CurrentValue.toFixed(3) + "\t" + PowerValue.toFixed(3) + "\t" + TotalEnergy.toFixed(3));
 
     if (BoardStartedFlag)
     {
@@ -665,6 +683,7 @@ var pravokotnikObstaja = 0;
 		
 	
 		if (data.stevilkaUkaza == "777") { // FORWARD
+	    	writelog2(Date.now() + "\t FORWARD PRESSED");
 		    StopFlag = false;
 		    SpinRight = false;
 		    SpinLeft = false;
@@ -689,6 +708,7 @@ var pravokotnikObstaja = 0;
 		}		  		  
 
 		else if (data.stevilkaUkaza == "888") { // BACKWARD
+		    writelog2(Date.now() + "\t BACKWARD PRESSED");
 		    StopFlag = false;
 		    SpinRight = false;
 		    SpinLeft = false;
@@ -713,6 +733,7 @@ var pravokotnikObstaja = 0;
 		}		  		  
   
 		else if (data.stevilkaUkaza == "999") { // STOP
+		    writelog2(Date.now() + "\t STOP PRESSED");
 		    StopFlag = true;
 		    SpinRight = false;
 		    SpinLeft = false;
@@ -728,6 +749,7 @@ var pravokotnikObstaja = 0;
 		}
 
 		else if (data.stevilkaUkaza == "7771") { // buttonLeftforward 
+		    writelog2(Date.now() + "\t buttonLeftforward PRESSED");
 		    StopFlag = false;
 		    SpinRight = false;
 		    SpinLeft = false;
@@ -752,6 +774,7 @@ var pravokotnikObstaja = 0;
 		}
 		
 		else if (data.stevilkaUkaza == "7772") { // buttonRightforward 
+		    writelog2(Date.now() + "\t buttonRightforward PRESSED");
 		    StopFlag = false;
 		    SpinRight = false;
 		    SpinLeft = false;
@@ -775,6 +798,7 @@ var pravokotnikObstaja = 0;
             FullStopFlag = false;
 		}
 		else if (data.stevilkaUkaza == "9991") { // buttonSpinleft 
+		    writelog2(Date.now() + "\t buttonSpinleft PRESSED");
 		    StopFlag = true;
 		    SpinLeft = true;
 		    Forward = false;
@@ -789,6 +813,7 @@ var pravokotnikObstaja = 0;
             FullStopFlag = false;
 		}
 		else if (data.stevilkaUkaza == "9992") { // buttonSpinright
+		    writelog2(Date.now() + "\t buttonSpinright PRESSED");
 		    StopFlag = true;
 		    SpinLeft = false;
 		    SpinRight = true;
@@ -803,6 +828,7 @@ var pravokotnikObstaja = 0;
             FullStopFlag = false;
 		}
 		else if (data.stevilkaUkaza == "8881") { // buttonLeftbackward
+		    writelog2(Date.now() + "\t buttonLeftbackward PRESSED");
 		    StopFlag = false;
 		    SpinRight = false;
 		    SpinLeft = false;
@@ -826,6 +852,7 @@ var pravokotnikObstaja = 0;
             FullStopFlag = false;
 		}
 		else if (data.stevilkaUkaza == "8882") { // buttonRightbackward
+		    writelog2(Date.now() + "\t buttonRightbackward PRESSED");
 		    StopFlag = false;
 		    SpinRight = false;
 		    SpinLeft = false;
@@ -850,21 +877,24 @@ var pravokotnikObstaja = 0;
         }
 
 
-		else if (data.stevilkaUkaza == "9998") { // CAMERA TILT
+		else if (data.stevilkaUkaza == "9998") { // CAMERA TILT DOWN
+		        writelog2(Date.now() + "\t CAMERA TILT DOWN PRESSED");
                 CameraDown = true;
                 CameraStop = false; 
 	        }
-        else if (data.stevilkaUkaza == "99981") { // CAMERA TILT
+        else if (data.stevilkaUkaza == "99981") { // CAMERA TILT DOWN
                 CameraDown = true;
                 CameraStop = true;
 	        }
-        else if (data.stevilkaUkaza == "99982") { // CAMERA TILT
+        else if (data.stevilkaUkaza == "99982") { // CAMERA TILT DOWN
+                writelog2(Date.now() + "\t CAMERA TILT DOWN PRESSED");
 			    tilt = tilt + 5;
                 if (tilt > 180)
                     tilt = 180;
                 board.servoWrite(CamVerticalPin,tilt);           
 	        }
         else if (data.stevilkaUkaza == "9999") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
+                writelog2(Date.now() + "\t CAMERA TILT UP PRESSED");
 			    CameraDown = false;
                 CameraStop = false;
 	        }	
@@ -873,26 +903,30 @@ var pravokotnikObstaja = 0;
                 CameraStop = true;    
 	        }
         else if (data.stevilkaUkaza == "99992") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
+                writelog2(Date.now() + "\t CAMERA TILT UP PRESSED");
                 tilt = tilt - 5;
                 if (tilt < 35)
                     tilt = 35;
 	        	board.servoWrite(CamVerticalPin,tilt);
-	        }
-        else if (data.stevilkaUkaza == "9996") { // CAMERA TILT
+	        } 
+        else if (data.stevilkaUkaza == "9996") { // CAMERA TILT LEFT
+                writelog2(Date.now() + "\t CAMERA TILT LEFT PRESSED");
                 CameraLeft = true;
                 CameraStop2 = false; 
 	        }
-        else if (data.stevilkaUkaza == "99961") { // CAMERA TILT
+        else if (data.stevilkaUkaza == "99961") { // CAMERA TILT LEFT
                 CameraLeft = true;
                 CameraStop2 = true;
 	        }
-        else if (data.stevilkaUkaza == "99962") { // CAMERA TILT
+        else if (data.stevilkaUkaza == "99962") { // CAMERA TILT LEFT
+                writelog2(Date.now() + "\t CAMERA TILT LEFT PRESSED");
 		        tilt2 = tilt2 - 3;
                 if (tilt2 < 1)
                     tilt2 = 1;
                 board.servoWrite(CamHorisontalPin,tilt2);           
 	        }
         else if (data.stevilkaUkaza == "9997") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
+                writelog2(Date.now() + "\t CAMERA TILT RIGHT PRESSED");
 			    CameraLeft = false;
                 CameraStop2 = false;
 	        }	
@@ -901,12 +935,14 @@ var pravokotnikObstaja = 0;
                 CameraStop2 = true;    
 	        }
         else if (data.stevilkaUkaza == "99972") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
+                writelog2(Date.now() + "\t CAMERA TILT RIGHT PRESSED");
                 tilt2 = tilt2 + 3;
 		        if (tilt2 > 179)
                     tilt2 = 179;
 	        	board.servoWrite(CamHorisontalPin,tilt2);
 	        }
 	   else if (data.stevilkaUkaza == "999339") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
+	            writelog2(Date.now() + "\t CAMERA TILT CENTER PRESSED");
 	            tilt = 90;
 	            tilt2 = 81;
                 board.servoWrite(CamHorisontalPin,tilt2);
@@ -915,11 +951,13 @@ var pravokotnikObstaja = 0;
                 CameraStop = true;
 	        }
 	   else if (data.stevilkaUkaza == "11171") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
+	            writelog2(Date.now() + "\t SPEED + PRESSED");
         		Speed = Speed + 0.2*Speed;  
 			    if (Speed > 50)
 				    Speed = 50;
 	        }
         else if (data.stevilkaUkaza == "11172") { // če je številka ukaza, ki smo jo dobili iz klienta enaka 0
+                writelog2(Date.now() + "\t SPEED - PRESSED");
         		Speed = Speed - 0.2*Speed; 
         		if (Speed < 0.1)
         		    Speed = 0.1;
@@ -927,11 +965,13 @@ var pravokotnikObstaja = 0;
 
 
 		else if (data.stevilkaUkaza == "90") { // èe je številka ukaza, ki smo jo dobili iz klienta enaka 1
+		        writelog2(Date.now() + "\t GRAB PRESSED");
 	        	board.servoWrite(9,175);
 	            //io.sockets.emit("sporociloKlientu", data.sporocilo); // izvedemo to funkcijo = "sporociloKlientu" na klientu, z argumentom, t.j. podatki="LED prižgana."
 //	            io.sockets.emit("sporociloKlientu", "LED prižgana na arduinu IP: " + localaddress + ":" + httpListenPort); // izvedemo to funkcijo = "sporociloKlientu" na klientu, z argumentom, t.j. podatki="LED prižgana."
 	        }
 	        else if (data.stevilkaUkaza == "91") { // èe je številka ukaza, ki smo jo dobili iz klienta enaka 0
+	            writelog2(Date.now() + "\t RELEASE PRESSED");
 	        	board.servoWrite(9,0);
 	            //io.sockets.emit("sporociloKlientu", data.sporocilo); // izvedemo to funkcijo = "sporociloKlientu" na klientu, z argumentom, t.j. podatki="LED prižgana."
 	            //io.sockets.emit("sporociloKlientu", "LED ugasnjena na arduinu IP: " + localaddress + ":" + httpListenPort); // izvedemo to funkcijo = "sporociloKlientu" na klientu, z argumentom, t.j. podatki="LED prižgana."
